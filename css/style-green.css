@@ -1155,6 +1155,10 @@ footer .credits a {
   border-radius: 1rem;
 }
 
+button-rouded2 {
+  border-radius: 50%;
+}
+
 .btn-lg {
   padding: .5rem 1rem;
   font-size: 1.25rem;
