@@ -2,7 +2,8 @@ jQuery(document).ready(function($) {
   "use strict";
 
   //Contact
-  $('form.contactForm').submit(function() {
+  $('form.contactForm').submit(function(e) {
+    e.preventDefault()
     var f = $(this).find('.form-group'),
       ferror = false,
       emailExp = /^[^\s()<>@,;:\/]+@\w[\w\.-]+\.[a-z]{2,}$/i;
@@ -89,29 +90,57 @@ jQuery(document).ready(function($) {
       }
     });
     if (ferror) return false;
-    else var str = $(this).serialize();
-    var action = $(this).attr('action');
-    if( ! action ) {
-      action = 'contactform/contactform.php';
-    }
-    $.ajax({
-      type: "POST",
-      url: action,
-      data: str,
-      success: function(msg) {
-        // alert(msg);
-        if (msg == 'OK') {
-          $("#sendmessage").addClass("show");
-          $("#errormessage").removeClass("show");
-          $('.contactForm').find("input, textarea").val("");
-        } else {
-          $("#sendmessage").removeClass("show");
-          $("#errormessage").addClass("show");
-          $('#errormessage').html(msg);
-        }
-
+    else var arrFormB = $(this).serializeArray(); 
+    let nome = arrFormB[0].value
+    let email = arrFormB[1].value
+    let assunto = arrFormB[2].value
+    var arrEmail = arrFormB.map(a => {
+      if(a.name === "email_envio_texto"){
+          a.value =`<h1> CONTATO - DEV FOLIO</h1>
+          <p><strong>NOME:</strong></p>
+          <p>${nome}</p>
+          <p><strong>E-MAIL:</strong></p>
+          <p>${email}</p>
+          <p><strong>ASSUNTO:</strong></p>
+          <p>${assunto}</p>
+          <p><strong>COMENTÁRIO:</strong></p>
+          <div>${a.value}</div>
+          `
       }
-    });
+      return a
+    })
+    var str = arrEmail.map((k) => `${encodeURIComponent(k.name)}=${encodeURIComponent(k.value)}`).join('&')
+    /**
+     * @todo montar a configuração usando seu e-mail e sua senha de app do GMAIL (Gerenciar sua conta google -> 
+     * Segurança -> (verificacao em duas etapas tem que estar ativada)) -> Senhas de app -> Selecionar app -> E-mail -> Outro -> adicionar um nome
+     */
+    let emailsenha = "&email=joaomourao.mourao1@gmail.com&senha=acgbxycoxkbqnpds"
+
+    $('#btnMandar').hide();
+    $('form input').prop('disabled', true)
+    $('form textarea').prop('disabled', true)
+    fetch("https://envioemail-dimas.herokuapp.com", {
+              method: "POST",
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+              },
+              body: str+emailsenha
+    })
+    .then(j => j.json())
+    .then(json => {
+      $("#sendmessage").show();
+      $("#errormessage").hide();
+    })
+    .catch(err => {
+      $("#errormessage").val(err.msg).show();
+      $("#sendmessage").hide();
+    })
+    .finally(e => {
+      $('form input').prop('disabled', false)
+      $('form textarea').prop('disabled', false)
+      $('#btnMandar').show();
+    })
+    
     return false;
   });
 
